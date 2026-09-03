@@ -1,12 +1,6 @@
-funcionarios = []
-
-continuar = "sim"
-
-print("=== CADASTRO FUNCIONÁRIO ===")
-
-while continuar == "sim":
-    nome = input("Nome: ").lower()
-    cargo = input("Cargo: ").lower()
+def cadastro_funcionario():
+    nome = input("Nome: ")
+    cargo = input("Cargo: ")
 
     salario = float(input("Salário: "))
     while salario <= 0:
@@ -31,21 +25,37 @@ while continuar == "sim":
         "regime": regime 
     }
 
-    funcionarios.append(funcionario)
+    return funcionario
 
-    print("=== FÚNCINÁRIO CADASTRADO ===")
+def mostrar_funcionario(funcionario):
+
     print(funcionario ["nome"])
     print(funcionario ["cargo"])
     print(f'R$ {funcionario["salario"]:.2f}')
     print(funcionario ["carga"])
     print(funcionario ["regime"])
 
+def listar_funcionarios(funcionarios):
+    for funcionario in funcionarios:
+        mostrar_funcionario(funcionario)
+
+funcionarios = []
+
+continuar = "sim"
+
+print("=== CADASTRO FUNCIONÁRIO ===")
+
+while continuar == "sim":
+
+    funcionario = cadastro_funcionario()
+
+    funcionarios.append(funcionario)
+
+    print("=== FUNCIONÁRIO CADASTRADO ===")
+    mostrar_funcionario(funcionario)
+    
     continuar = input("Deseja cadastrar um novo funcionário? (sim/não)").lower()
 
-for funcionario in funcionarios:
-    print("\n=== FUNCIONÁRIOS ===")
-    print(funcionario["nome"])
-    print(funcionario ["cargo"])
-    print(f'R$ {funcionario["salario"]:.2f}')
-    print(funcionario ["carga"])
-    print(funcionario ["regime"])
+print("=== FUNCIONÁRIOS CADASTRADOS ===")
+
+listar_funcionarios(funcionarios)
