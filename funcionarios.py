@@ -45,3 +45,21 @@ def buscar_funcionario(funcionarios, nome_busca):
             return funcionario
         
 
+def editar_funcionario(funcionarios):
+    listar_funcionarios(funcionarios)
+    nome_busca = input('Qual funcionário deseja editar? ').lower()
+    funcionario_encontrado = buscar_funcionario(funcionarios, nome_busca)
+    if funcionario_encontrado:
+        mostrar_funcionario(funcionario_encontrado)
+        print('== Qual dado deseja editar? ==')
+        print('1 - Cargo')
+        editar_dado = int(input('Escolha uma opção? '))
+
+        if editar_dado == 1:
+            print('Cargo atual:', funcionario_encontrado["cargo"])
+            novo_cargo = input('Digite o novo cargo: ').lower()
+            funcionario_encontrado["cargo"] = novo_cargo
+            print('Cargo atualizado com sucesso!')
+            print('Novo cargo:', funcionario_encontrado["cargo"])
+            #próximas tarefas: - adicionar a edição dos itens restantes
+            
