@@ -39,23 +39,9 @@ def listar_funcionarios(funcionarios):
     for funcionario in funcionarios:
         mostrar_funcionario(funcionario)
 
-funcionarios = []
+def buscar_funcionario(funcionarios, nome_busca):
+    for funcionario in funcionarios:
+        if funcionario["nome"].lower() == nome_busca:
+            return funcionario
+        
 
-continuar = "sim"
-
-print("=== CADASTRO FUNCIONÁRIO ===")
-
-while continuar == "sim":
-
-    funcionario = cadastro_funcionario()
-
-    funcionarios.append(funcionario)
-
-    print("=== FUNCIONÁRIO CADASTRADO ===")
-    mostrar_funcionario(funcionario)
-    
-    continuar = input("Deseja cadastrar um novo funcionário? (sim/não)").lower()
-
-print("=== FUNCIONÁRIOS CADASTRADOS ===")
-
-listar_funcionarios(funcionarios)
