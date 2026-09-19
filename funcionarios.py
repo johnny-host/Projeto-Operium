@@ -52,14 +52,50 @@ def editar_funcionario(funcionarios):
     if funcionario_encontrado:
         mostrar_funcionario(funcionario_encontrado)
         print('== Qual dado deseja editar? ==')
-        print('1 - Cargo')
+        print('1 - Nome')
+        print('2 - Cargo')
+        print('3 - Sálario')
+        print('4 - Carga')
+        print('5 - Regime')
         editar_dado = int(input('Escolha uma opção? '))
 
         if editar_dado == 1:
+            print('Nome atual: ', funcionario_encontrado["nome"])
+            novo_nome = input('Digite o novo nome: ').lower()
+            funcionario_encontrado["nome"] = novo_nome
+            print('Nome atualizado com sucesso!')
+            print('Novo nome: ', funcionario_encontrado["nome"])
+
+        if editar_dado == 2:
             print('Cargo atual:', funcionario_encontrado["cargo"])
             novo_cargo = input('Digite o novo cargo: ').lower()
             funcionario_encontrado["cargo"] = novo_cargo
             print('Cargo atualizado com sucesso!')
-            print('Novo cargo:', funcionario_encontrado["cargo"])
-            #próximas tarefas: - adicionar a edição dos itens restantes
-            
+            print('Novo cargo: ', funcionario_encontrado["cargo"])
+
+        if editar_dado == 3:
+            print('Salário atual: ', funcionario_encontrado["salario"])
+            novo_salario = float(input('Digite o novo salário: '))
+            while novo_salario <= 0:
+                print('Valor Inválido! Tente novamente.')
+            novo_salario = float(input("Cadastre um valor válido!"))
+            funcionario_encontrado["salario"] = novo_salario
+            print('Salário atualizado com sucesso!')
+            print('Novo salário: ', funcionario_encontrado["salario"])
+
+        if editar_dado == 4:
+            print('Carga horária atual: ', funcionario_encontrado["carga"])
+            nova_carga = int(input('Digite nova carga horária: '))
+            while nova_carga <= 0 or nova_carga > 44:
+                    print('Valor inválido ou não permitido. Tente novamante.')
+                    nova_carga = int(input("Digite a carga semanal: "))
+            funcionario_encontrado["carga"] = nova_carga
+            print('Carga horária atualizada com sucesso!')
+            print('Nova carga horária: ', funcionario_encontrado["carga"])
+
+        if editar_dado == 5:
+            print('Regime atual: ', funcionario_encontrado["regime"])
+            novo_regime = input('Digite o novo regime: ')
+            funcionario_encontrado["regime"] = novo_regime
+            print('Regime atualizado com sucesso!')
+            print('Novo regime: ', funcionario_encontrado["regime"])
