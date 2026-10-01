@@ -8,21 +8,21 @@ funcionarios = []
 
 while True:
     print('==== OPERIUM MENU ====')
-    print('1 - Cadastrar Fúncionário')
+    print('1 - Cadastrar Funcionário')
     print('2 - Listar Funcionários')
     print('3 - Buscar Funcionário')
-    print('4 - Editar Fúncionário')
+    print('4 - Editar Funcionário')
     print('5 - Sair')
-    menu_opcao = int(input('Escolha uma opção: '))
+    menu_opcao = input('Escolha uma opção: ').strip()
 
-    if menu_opcao == 1:
+    if menu_opcao == "1":
         funcionario = cadastro_funcionario()
         funcionarios.append(funcionario)
 
-    elif menu_opcao == 2:
+    elif menu_opcao == "2":
         listar_funcionarios(funcionarios)
 
-    elif menu_opcao == 3:
+    elif menu_opcao == "3":
         nome_busca = input('Qual funcionário deseja buscar? ').lower()
         funcionario_encontrado = buscar_funcionario(funcionarios, nome_busca)
 
@@ -31,11 +31,11 @@ while True:
         else:
             print("Funcionário não encontrado!")
             
-    elif menu_opcao == 4:
+    elif menu_opcao == "4":
         editar_funcionario(funcionarios)
 
 
-    elif menu_opcao == 5:
+    elif menu_opcao == "5":
         break
 
     else:

@@ -22,7 +22,7 @@ def cadastro_funcionario():
         "cargo": cargo,
         "salario": salario,
         "carga": carga,
-        "regime": regime 
+        "regime": regime,
     }
 
     return funcionario
@@ -66,24 +66,24 @@ def editar_funcionario(funcionarios):
             print('Nome atualizado com sucesso!')
             print('Novo nome: ', funcionario_encontrado["nome"])
 
-        if editar_dado == 2:
+        elif editar_dado == 2:
             print('Cargo atual:', funcionario_encontrado["cargo"])
             novo_cargo = input('Digite o novo cargo: ').lower()
             funcionario_encontrado["cargo"] = novo_cargo
             print('Cargo atualizado com sucesso!')
             print('Novo cargo: ', funcionario_encontrado["cargo"])
 
-        if editar_dado == 3:
+        elif editar_dado == 3:
             print('Salário atual: ', funcionario_encontrado["salario"])
             novo_salario = float(input('Digite o novo salário: '))
             while novo_salario <= 0:
                 print('Valor Inválido! Tente novamente.')
-            novo_salario = float(input("Cadastre um valor válido!"))
-            funcionario_encontrado["salario"] = novo_salario
-            print('Salário atualizado com sucesso!')
-            print('Novo salário: ', funcionario_encontrado["salario"])
+                novo_salario = float(input("Cadastre um valor válido!"))
+                funcionario_encontrado["salario"] = novo_salario
+                print('Salário atualizado com sucesso!')
+                print('Novo salário: ', funcionario_encontrado["salario"])
 
-        if editar_dado == 4:
+        elif editar_dado == 4:
             print('Carga horária atual: ', funcionario_encontrado["carga"])
             nova_carga = int(input('Digite nova carga horária: '))
             while nova_carga <= 0 or nova_carga > 44:
@@ -93,7 +93,7 @@ def editar_funcionario(funcionarios):
             print('Carga horária atualizada com sucesso!')
             print('Nova carga horária: ', funcionario_encontrado["carga"])
 
-        if editar_dado == 5:
+        elif editar_dado == 5:
             print('Regime atual: ', funcionario_encontrado["regime"])
             novo_regime = input('Digite o novo regime: ')
             funcionario_encontrado["regime"] = novo_regime
