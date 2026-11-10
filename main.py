@@ -1,5 +1,6 @@
 from administrador import cadastrar_admin
 from acesso import login_geral
+from registros_jornada import registrar_jornada, consultar_jornadas, mostrar_jornadas
 import pickle
 from armazenamento import carregar_dados, dados_vazios, salvar_dados
 from escalas import ajustar_dia, cadastrar_escala, consultar_planejamento, mostrar_planejamento
@@ -44,6 +45,8 @@ def menu_sistema(admin_logado):
         print("11 - Consultar regras")
         print("12 - Ajustar um dia / informar feriado")
         print("13 - Definir / redefinir senha do funcionário")
+        print("14 - Registrar / corrigir jornada realizada")
+        print("15 - Consultar jornadas realizadas")
         menu_opcao = ler_opcao("Escolha uma opção: ")
 
         if menu_opcao == 1:
@@ -95,6 +98,14 @@ def menu_sistema(admin_logado):
 
         elif menu_opcao == 13:
             definir_senha_funcionario(funcionarios)
+
+        elif menu_opcao == 14:
+            if registrar_jornada(funcionarios):
+                salvar_dados(dados)
+                print("Jornada salva no arquivo local.")
+
+        elif menu_opcao == 15:
+            consultar_jornadas(funcionarios)
 
         else:
             print("Opção inválida!")
@@ -155,6 +166,7 @@ def menu_funcionario(funcionario):
         print("2 - Minha escala")
         print("3 - Trocar minha senha")
         print("4 - Sair (logout)")
+        print("5 - Minhas jornadas realizadas")
         opcao = ler_opcao("Escolha uma opção: ")
         if opcao == 1:
             mostrar_funcionario(funcionario)
@@ -167,13 +179,15 @@ def menu_funcionario(funcionario):
         elif opcao == 4:
             print("Sessão encerrada.")
             break
+        elif opcao == 5:
+            mostrar_jornadas(funcionario)
         else:
             print("Opção inválida!")
 
 
 def iniciar():
     global dados, admins, funcionarios
-    # Erro de leitura interrompe o início, sem sobrescrever o arquivo existente.
+
     try:
         dados = carregar_dados()
     except (OSError, ValueError, EOFError, pickle.UnpicklingError, ImportError, AttributeError) as erro:
@@ -186,7 +200,7 @@ def iniciar():
         menu_autenticacao()
     except OSError as erro:
         print(f"Falha ao salvar: {erro}")
-        print("Sistema encerrado. A última alteração pode não estar salva; a gravação anterior foi preservada.")
+        print("Sistema encerrado. A última alteração pode não estar salva e a gravação anterior foi preservada.")
     except (EOFError, KeyboardInterrupt):
         print("\nOperium encerrado. Operações já salvas permanecem no arquivo.")
 

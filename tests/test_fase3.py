@@ -43,7 +43,7 @@ def regra_exemplo():
 class PersistenciaTest(TestCase):
     def test_arquivo_novo_e_reabertura(self):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / "dados.pkl"
+            arquivo = Path(pasta) / "dados.db"
             dados = armazenamento.carregar_dados(arquivo)
             dados["funcionarios"].append(funcionario_exemplo())
             dados["funcionarios"][0]["escalas"] = [escala_exemplo()]
@@ -53,23 +53,22 @@ class PersistenciaTest(TestCase):
             self.assertEqual(armazenamento.carregar_dados(arquivo), dados)
             self.assertNotIn(b'senha123', arquivo.read_bytes())
 
-    def test_backup_e_falha_na_substituicao(self):
+    def test_backup_e_rollback(self):
+        import sqlite3
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / "dados.pkl"
+            arquivo = Path(pasta) / 'dados.db'
             dados = armazenamento.dados_vazios()
             armazenamento.salvar_dados(dados, arquivo)
-            original = arquivo.read_bytes()
-            dados["funcionarios"].append(funcionario_exemplo())
-            with patch('armazenamento.os.replace', side_effect=OSError('falha simulada')):
-                with self.assertRaises(OSError):
-                    armazenamento.salvar_dados(dados, arquivo)
-            self.assertEqual(arquivo.read_bytes(), original)
-            self.assertEqual(arquivo.with_suffix('.bak').read_bytes(), original)
-            self.assertFalse(arquivo.with_suffix('.tmp').exists())
+            original = armazenamento.carregar_dados(arquivo)
+            dados['funcionarios'] = [funcionario_exemplo(), funcionario_exemplo()]
+            with self.assertRaises(sqlite3.IntegrityError):
+                armazenamento.salvar_dados(dados, arquivo)
+            self.assertEqual(armazenamento.carregar_dados(arquivo), original)
+            self.assertEqual(armazenamento.carregar_dados(arquivo.with_suffix('.db.bak')), original)
 
     def test_corrompido_nao_inicia_nem_sobrescreve(self):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / "dados.pkl"
+            arquivo = Path(pasta) / "dados.db"
             arquivo.write_bytes(b'arquivo corrompido')
             with patch.object(aplicativo, 'carregar_dados', side_effect=lambda: armazenamento.carregar_dados(arquivo)):
                 with patch.object(aplicativo, 'menu_autenticacao') as menu, redirect_stdout(StringIO()):
@@ -79,8 +78,8 @@ class PersistenciaTest(TestCase):
 
     def test_backup_sem_original_nao_cria_base_vazia(self):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / 'dados.pkl'
-            arquivo.with_suffix('.bak').write_bytes(b'backup')
+            arquivo = Path(pasta) / 'dados.db'
+            arquivo.with_suffix('.db.bak').write_bytes(b'backup')
             with self.assertRaises(ValueError):
                 armazenamento.carregar_dados(arquivo)
 
@@ -92,7 +91,7 @@ class PersistenciaTest(TestCase):
     @patch('senhas.getpass', side_effect=['funcionario123', 'funcionario123'])
     def test_cadastro_e_escala_salvos_pelo_menu(self, senha_digitada):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / 'dados.pkl'
+            arquivo = Path(pasta) / 'dados.db'
             dados = armazenamento.dados_vazios()
             dados['admins'].append({'usuario': 'gestor', 'senha': proteger_senha('senha123')})
             armazenamento.salvar_dados(dados, arquivo)
@@ -111,7 +110,7 @@ class PersistenciaTest(TestCase):
 
     def test_salva_primeiro_admin_e_reabre_login(self):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / 'dados.pkl'
+            arquivo = Path(pasta) / 'dados.db'
             with patch.object(aplicativo, 'carregar_dados', side_effect=lambda: armazenamento.carregar_dados(arquivo)), \
                  patch.object(aplicativo, 'salvar_dados', side_effect=lambda dados: armazenamento.salvar_dados(dados, arquivo)), \
                  redirect_stdout(StringIO()):

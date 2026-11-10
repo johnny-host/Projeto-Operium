@@ -76,7 +76,7 @@ class AcessoFuncionarioTest(TestCase):
 
     def test_login_e_troca_persistidos_apos_reabrir(self):
         with TemporaryDirectory() as pasta:
-            arquivo = Path(pasta) / 'teste.pkl'
+            arquivo = Path(pasta) / 'teste.db'
             dados = dados_vazios()
             dados['admins'] = [{'usuario': 'admin', 'senha': proteger_senha('admin1234')}]
             dados['funcionarios'] = [self.funcionario]

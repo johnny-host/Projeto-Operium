@@ -19,15 +19,30 @@ Execute `python main.py` com Python 3. Não há dependências externas. Mantivem
 
 O módulo de funcionários inclui ID sequencial, CPF validado e único, nascimento, admissão, edição confirmada e inativação. Nomes iguais são permitidos. Regime contratual e tipo de jornada são campos separados.
 
-### Dados salvos com pickle
+### Banco SQLite
 
-`armazenamento.py` grava administradores, funcionários, escalas e regras em `dados/operium.pkl`. A pasta é criada na primeira gravação. O caminho independe da pasta de onde você executa o programa. Os IDs continuam a partir dos cadastros existentes após reabrir.
+O armazenamento agora usa `dados/operium.db`, criado a partir de `schema.sql`. O Python instalado já oferece `sqlite3`; não é necessário instalar um servidor, Docker ou dependências adicionais. Execute normalmente `python main.py`.
 
-Cada operação de alteração concluída dispara o salvamento. Antes de substituir o arquivo, o programa escreve um temporário e mantém a versão anterior em `dados/operium.bak`. Operações canceladas também podem gerar uma gravação sem alterações. Se o arquivo não puder ser lido, o programa encerra sem substituí-lo por uma base vazia. Em falha de gravação, informa o erro e encerra; a alteração mais recente pode não ter sido salva.
+Tabelas: `administradores`, `funcionarios`, `contratos`, `escalas`, `ajustes_escala`, `jornadas` e `regras`. Funcionários têm ID e CPF único; contratos, escalas e jornadas usam referências ao funcionário. Só pode existir uma jornada por funcionário/data. Consultas e gravações usam valores parametrizados.
 
-O backup contém apenas a gravação anterior, não todo o histórico. Para recuperar: feche o Operium, guarde uma cópia do arquivo problemático e copie o backup confiável para `operium.pkl`. Um backup sem arquivo principal bloqueia a criação automática de uma base vazia. Não abra duas instâncias ao mesmo tempo: esta versão não tem controle de concorrência.
+Para manter o código intermediário, os menus continuam usando listas e dicionários. `armazenamento.py` converte esses dados em registros SQL. Cada salvamento grava o retrato completo das listas em uma transação: se uma operação falhar, o banco desfaz a alteração. Não execute duas instâncias do Operium ao mesmo tempo: os menus ainda mantêm uma cópia em memória e não coordenam alterações concorrentes.
 
-`pickle` é persistência em arquivo, não um banco relacional. Carregue apenas o arquivo criado localmente pelo Operium: arquivos pickle adulterados podem executar código. Não importe arquivos recebidos de terceiros. A pasta `dados/` foi excluída do Git. Os demais dados não são criptografados; senhas de administrador são armazenadas como hash com salt, sem o texto original. Referência: [documentação do pickle](https://docs.python.org/3/library/pickle.html).
+Dados principais ficam em colunas SQL; a configuração variável dos dias/plantões, o turno de cada ajuste, parâmetros de regras e os hashes de senha usam JSON em colunas específicas. Datas mantêm DD/MM/AAAA nesta primeira migração; não ordene essas colunas diretamente para obter ordem cronológica em SQL. Senhas continuam protegidas por hash com salt. O arquivo do banco não é criptografado.
+
+Antes de cada gravação em um banco existente, o sistema gera `dados/operium.db.bak` usando a função de backup do SQLite. Esse arquivo guarda a versão anterior, não o histórico completo. Para restaurar, feche o programa, preserve uma cópia do banco atual e copie o backup para `operium.db`. Não sincronize nem edite o banco simultaneamente entre computadores. A pasta `dados/` permanece fora do Git.
+
+Na primeira abertura sem `operium.db`, se existir `operium.pkl`, `migracao.py` importa automaticamente os dados locais. Ela cria um banco temporário, compara os dados recuperados com os originais e só depois ativa o SQLite. O pickle original e seu backup permanecem intactos; ele não volta a ser importado se o SQLite já existir. Se houver erro ou incompatibilidade, a migração é interrompida sem ativar um banco parcial. O leitor aceita apenas os tipos simples usados pelo projeto antigo.
+
+Depois da migração, mudanças no `.pkl` não afetam o programa. Nunca apague o `.db` para forçar uma migração, pois isso pode recuperar dados antigos. A presença de um backup sem banco principal bloqueia a criação de uma base vazia.
+
+Exemplo de consulta para estudar, usando uma conexão com `dados/operium.db`:
+
+```sql
+SELECT f.id, f.nome, c.cargo, c.data_admissao
+FROM funcionarios AS f
+JOIN contratos AS c ON c.funcionario_id = f.id
+WHERE f.status = 'ativo';
+```
 
 ### Como usar a Fase 3
 
@@ -64,14 +79,14 @@ Totais semanais usam segunda a domingo. Semanas incompletas ou com datas sem esc
 
 O limite fixo de 44 horas foi retirado do cadastro. Ele agora aceita uma carga positiva até o limite físico de 168 horas na semana, e o planejamento é comparado com os limites configurados. Isso não autoriza jornadas de qualquer duração.
 
-O sistema trabalha com **jornada planejada**, não com ponto realizado. Faltam lançamento de horas efetivas, banco de horas, cálculo financeiro, critérios específicos para domingos/feriados, hora noturna reduzida e múltiplas faixas de intervalo. Feriados são informados manualmente, sem calendário automático. O histórico salarial foi retirado do escopo por decisão do projeto. Os cálculos de 13º e férias serão implementados posteriormente.
+O sistema possui **jornada planejada e lançamentos manuais de jornada realizada**, sem ponto eletrônico. Faltam banco de horas, cálculo financeiro, critérios específicos para domingos/feriados, hora noturna reduzida e múltiplas faixas de intervalo. Feriados são informados manualmente, sem calendário automático. O histórico salarial foi retirado do escopo por decisão do projeto. Os cálculos de 13º e férias serão implementados posteriormente.
 
 A referência de estudo é a [CLT no Portal Planalto](https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452compilado.htm), especialmente os arts. 58, 59, 59-A, 66, 67, 71 e 73. A aplicação depende do regime e dos instrumentos coletivos; os alertas do programa não certificam conformidade trabalhista.
 
 ### Roteiro de leitura e testes
 
 - `validacoes.py`: entrada de dados, funções de validação e `try/except`.
-- `armazenamento.py`: leitura e gravação com `pickle`, `with` e arquivos.
+- `armazenamento.py` e `schema.sql`: tabelas, consultas SQL, transações e backups. `migracao.py`: importação dos dados antigos.
 - `jornada.py`: datas, horários e duração em minutos.
 - `regras.py`: cadastro e seleção das regras pela vigência.
 - `escalas.py`: padrão semanal, ciclo 12x36, ajustes e relatório.
@@ -89,4 +104,20 @@ O funcionário pode consultar apenas seus dados e sua escala, trocar a própria 
 
 A data de admissão já é obrigatória no cadastro e fica em `contrato["data_admissao"]`, no formato DD/MM/AAAA. Pode ser corrigida pelo administrador na edição (opção 7), com validação e confirmação. Não pode anteceder o nascimento nem ficar depois de uma escala existente. A função `obter_data_admissao()` devolve um objeto `date` para os futuros cálculos. Ela não calcula direitos: regras e valores de 13º, férias e outros benefícios ainda serão implementados. Não criamos uma segunda data de início para representar o mesmo vínculo.
 
-O armazenamento continua em pickle nesta etapa; a escolha e a migração para um banco de dados serão discutidas depois.
+O armazenamento foi migrado para SQLite, preservando os acessos existentes.
+
+### Jornada realizada — lançamento e integração
+
+As funções compartilhadas de `jornada.py` foram recuperadas. O registro de entrada, saída e horários de intervalo foi integrado em `registros_jornada.py`, para não criar dependência circular com o módulo de funcionários.
+
+- Administrador: opção **14** para registrar ou corrigir uma jornada; opção **15** para consultar por período.
+- Funcionário: opção **5** para consultar somente suas próprias jornadas.
+- As opções 8 e 9 continuam tratando de escalas planejadas, separadamente dos lançamentos realizados.
+
+Informe a data de entrada, entrada e saída em HH:MM. Se houver intervalo, informe saída para pausa e retorno. Saída menor que entrada representa o dia seguinte. O programa calcula minutos trabalhados descontando a pausa. Aceita um turno inferior a 24 horas e um intervalo por data de entrada; múltiplos turnos ou intervalos por dia ficam para uma evolução posterior.
+
+Os registros ficam em `funcionario["jornadas"]`, sem alterar escalas. Funcionários antigos não precisam ser recadastrados: a lista é criada no primeiro lançamento confirmado. Uma segunda entrada para a mesma data exige confirmação de correção e substitui o registro, sem duplicar o total. Não há histórico de versões desses lançamentos nesta etapa.
+
+São rejeitados horários inválidos, intervalos fora do turno, jornadas anteriores à admissão, jornadas ainda não encerradas e sobreposição com outra data. Funcionários inativos podem ser consultados, mas não recebem novos lançamentos. A edição da admissão também respeita as jornadas já registradas.
+
+O salvamento usa SQLite e ocorre após confirmação no menu administrativo. A consulta soma apenas os lançamentos do período, pela data de entrada. Datas sem registro não são tratadas como falta. Não há conversão automática dessa soma para horas extras, descontos, adicionais ou banco de horas.

@@ -37,7 +37,7 @@ def datas_validas(nascimento, admissao):
 
 
 def cadastro_funcionario(funcionarios):
-    # Como não apagamos funcionários, o próximo ID fica após o maior ID.
+    #funcionários n são apagados, o próximo ID fica depois do maior ID.
     novo_id = 1
     for funcionario in funcionarios:
         if funcionario["id"] >= novo_id:
@@ -67,7 +67,6 @@ def cadastro_funcionario(funcionarios):
         "data_nascimento": nascimento,
         "status": "ativo",
         "senha": senha,
-        # Um dicionário interno agrupa os dados do contrato.
         "contrato": {
             "cargo": cargo,
             "salario": salario,
@@ -163,7 +162,7 @@ def editar_funcionario(funcionarios):
     if funcionario is None:
         return
 
-    # Cada opção informa: a chave do dicionário e a função de validação.
+    # Cada opção vai informa: a chave do dicionário e a função de validação do colborador
     campos = {
         "1": ("nome", validar_nome),
         "2": ("cargo", validar_nome),
@@ -203,6 +202,10 @@ def editar_funcionario(funcionarios):
             nascimento = novo_valor
         elif campo == "data_admissao":
             admissao = novo_valor
+            if any(datetime.strptime(registro["data"], "%d/%m/%Y") < datetime.strptime(admissao, "%d/%m/%Y")
+                   for registro in funcionario.get("jornadas", [])):
+                print("A admissão não pode ficar depois de uma jornada realizada já registrada.")
+                continue
             if any(datetime.strptime(escala["inicio"], "%d/%m/%Y") < datetime.strptime(admissao, "%d/%m/%Y")
                    for escala in funcionario.get("escalas", [])):
                 print("A admissão não pode ficar depois de uma escala já cadastrada.")

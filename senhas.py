@@ -6,7 +6,7 @@ from secrets import token_hex
 
 
 def proteger_senha(senha):
-    # O salt faz senhas iguais gerarem resultados diferentes no arquivo.
+    
     salt = token_hex(16)
     resumo = pbkdf2_hmac("sha256", senha.encode(), bytes.fromhex(salt), 600_000)
     return {"salt": salt, "resumo": resumo.hex(), "iteracoes": 600_000}
