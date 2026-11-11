@@ -121,3 +121,18 @@ Os registros ficam em `funcionario["jornadas"]`, sem alterar escalas. Funcionár
 São rejeitados horários inválidos, intervalos fora do turno, jornadas anteriores à admissão, jornadas ainda não encerradas e sobreposição com outra data. Funcionários inativos podem ser consultados, mas não recebem novos lançamentos. A edição da admissão também respeita as jornadas já registradas.
 
 O salvamento usa SQLite e ocorre após confirmação no menu administrativo. A consulta soma apenas os lançamentos do período, pela data de entrada. Datas sem registro não são tratadas como falta. Não há conversão automática dessa soma para horas extras, descontos, adicionais ou banco de horas.
+
+### Ponto eletrônico — marcações e apuração (Fase 4)
+
+O módulo `ponto.py` registra marcações e apura o realizado. Ele só lê cadastro, escalas e regras; não altera folha, banco de horas nem cadastro. As marcações ficam em `funcionario["marcacoes"]` e são gravadas na tabela `marcacoes` (criada automaticamente em bancos antigos, sem apagar dados).
+
+- **Funcionário:** opção **6 — Bater ponto** usa a hora do sistema (não é possível informar outra) e oferece só os tipos válidos naquele momento: entrada, saída para intervalo, volta do intervalo e saída. A opção **7** mostra suas marcações e ocorrências por período.
+- **Administrador:** opção **16** lança uma marcação manual (esquecimento/correção), com data, hora e motivo obrigatório; fica identificada como `manual`. A opção **17** consulta o ponto de qualquer funcionário.
+
+**Sequência e turnos:** entrada → [saída para intervalo → volta] → saída. Marcações no mesmo minuto, futuras ou anteriores à admissão são recusadas. O turno pode virar a meia-noite e é atribuído à data da entrada, como nas escalas. Um turno aberto há 24 h ou mais é tratado como esquecido (ocorrência) e uma nova entrada é aceita. Um intervalo esquecido pode ser lançado em dois passos pelo admin; o dia fica sinalizado até a volta ser lançada.
+
+**Apuração diária:** compara as marcações com a escala planejada (incluindo ajustes e 12x36) e com a regra vigente da empresa/categoria. Calcula horas líquidas, intervalo realizado, previsto e diferença do dia; extra e débito só existem acima da tolerância (`TOLERANCIA_MIN = 5` min, parâmetro de `apurar_dia`).
+
+**Ocorrências:** atraso, entrada antecipada, saída antecipada ou tardia, intervalo menor que o configurado, limite diário e excedente de horas extras, descanso entre jornadas, turno sem saída, intervalo sem retorno, marcação em folga/DSR/dia sem escala e ausência de marcação em dia de trabalho previsto (dias já passados).
+
+**Limites:** a diferença diária é informativa, sem saldo acumulado nem banco de horas. As jornadas lançadas manualmente (opções 14/15) continuam separadas das marcações de ponto. Um intervalo por turno; datas sem escala não geram ocorrência de ausência. Os alertas auxiliam a conferência e não certificam conformidade trabalhista.
