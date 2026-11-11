@@ -5,6 +5,7 @@ import pickle
 from armazenamento import carregar_dados, dados_vazios, salvar_dados
 from escalas import ajustar_dia, cadastrar_escala, consultar_planejamento, mostrar_planejamento
 from regras import cadastrar_regra, listar_regras
+from ponto import bater_ponto, consultar_ponto, mostrar_ponto, registrar_marcacao_manual
 from funcionarios import (
     buscar_funcionario,
     cadastro_funcionario,
@@ -47,6 +48,8 @@ def menu_sistema(admin_logado):
         print("13 - Definir / redefinir senha do funcionário")
         print("14 - Registrar / corrigir jornada realizada")
         print("15 - Consultar jornadas realizadas")
+        print("16 - Registrar marcação de ponto manual")
+        print("17 - Consultar ponto e ocorrências")
         menu_opcao = ler_opcao("Escolha uma opção: ")
 
         if menu_opcao == 1:
@@ -106,6 +109,14 @@ def menu_sistema(admin_logado):
 
         elif menu_opcao == 15:
             consultar_jornadas(funcionarios)
+
+        elif menu_opcao == 16:
+            if registrar_marcacao_manual(funcionarios):
+                salvar_dados(dados)
+                print("Marcação salva no arquivo local.")
+
+        elif menu_opcao == 17:
+            consultar_ponto(funcionarios, dados["regras"])
 
         else:
             print("Opção inválida!")
@@ -167,6 +178,8 @@ def menu_funcionario(funcionario):
         print("3 - Trocar minha senha")
         print("4 - Sair (logout)")
         print("5 - Minhas jornadas realizadas")
+        print("6 - Bater ponto")
+        print("7 - Meu ponto (marcações e ocorrências)")
         opcao = ler_opcao("Escolha uma opção: ")
         if opcao == 1:
             mostrar_funcionario(funcionario)
@@ -181,6 +194,12 @@ def menu_funcionario(funcionario):
             break
         elif opcao == 5:
             mostrar_jornadas(funcionario)
+        elif opcao == 6:
+            if bater_ponto(funcionario):
+                salvar_dados(dados)
+                print("Marcação salva.")
+        elif opcao == 7:
+            mostrar_ponto(funcionario, dados["regras"])
         else:
             print("Opção inválida!")
 

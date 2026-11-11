@@ -42,7 +42,7 @@ def conferir_banco(conexao):
 
 def gravar_registros(conexao, dados):
     # A transação substitui o retrato em memória sem deixar gravação pela metade.
-    for tabela in ('ajustes_escala', 'jornadas', 'escalas', 'contratos', 'funcionarios', 'administradores', 'regras'):
+    for tabela in ('ajustes_escala', 'jornadas', 'marcacoes', 'escalas', 'contratos', 'funcionarios', 'administradores', 'regras'):
         conexao.execute(f"DELETE FROM {tabela}")
     for admin in dados['admins']:
         inserir(conexao, 'administradores', {'usuario': admin['usuario'], 'senha': json_texto(admin['senha'])})
@@ -61,6 +61,8 @@ def gravar_registros(conexao, dados):
                 inserir(conexao, 'ajustes_escala', campos)
         for jornada in funcionario.get('jornadas', []):
             inserir(conexao, 'jornadas', {'funcionario_id': funcionario['id'], **jornada})
+        for marcacao in funcionario.get('marcacoes', []):
+            inserir(conexao, 'marcacoes', {'funcionario_id': funcionario['id'], **marcacao})
     for regra in dados['regras']:
         campos = {chave: regra[chave] for chave in ('versao', 'empresa', 'categoria', 'inicio', 'fim', 'fonte')}
         parametros = {chave: valor for chave, valor in regra.items() if chave not in campos}
@@ -84,6 +86,8 @@ def salvar_dados(dados, caminho=ARQUIVO):
                 conferir_banco(conexao)
                 with closing(sqlite3.connect(caminho.with_suffix('.db.bak'))) as backup:
                     conexao.backup(backup)
+                # Bancos criados antes da Fase 4 ganham a tabela de marcações (IF NOT EXISTS).
+                conexao.executescript(ESQUEMA.read_text(encoding='utf-8-sig'))
             with conexao:  # commit ao terminar; rollback se ocorrer erro.
                 gravar_registros(conexao, dados)
     except Exception:
@@ -108,6 +112,7 @@ def carregar_dados(caminho=ARQUIVO):
     dados = dados_vazios()
     with closing(conectar(caminho)) as conexao:
         conferir_banco(conexao)
+        tem_marcacoes = conexao.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'marcacoes'").fetchone()
         for linha in conexao.execute('SELECT * FROM administradores ORDER BY rowid'):
             dados['admins'].append({'usuario': linha['usuario'], 'senha': json.loads(linha['senha'])})
         for linha in conexao.execute('SELECT * FROM funcionarios ORDER BY id'):
@@ -136,6 +141,11 @@ def carregar_dados(caminho=ARQUIVO):
                 jornada = dict(linha_jornada)
                 del jornada['id'], jornada['funcionario_id']
                 funcionario.setdefault('jornadas', []).append(jornada)
+            if tem_marcacoes:
+                for linha_marcacao in conexao.execute('SELECT * FROM marcacoes WHERE funcionario_id = ? ORDER BY id', (funcionario['id'],)):
+                    marcacao = dict(linha_marcacao)
+                    del marcacao['id'], marcacao['funcionario_id']
+                    funcionario.setdefault('marcacoes', []).append(marcacao)
             dados['funcionarios'].append(funcionario)
         for linha in conexao.execute('SELECT * FROM regras ORDER BY versao'):
             regra = dict(linha)

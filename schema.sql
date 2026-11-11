@@ -52,6 +52,16 @@ CREATE TABLE IF NOT EXISTS jornadas (
     observacao TEXT NOT NULL,
     UNIQUE(funcionario_id, data)
 );
+CREATE TABLE IF NOT EXISTS marcacoes (
+    id INTEGER PRIMARY KEY,
+    funcionario_id INTEGER NOT NULL REFERENCES funcionarios(id) ON DELETE CASCADE,
+    data TEXT NOT NULL,
+    hora TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK(tipo IN ('entrada', 'saida_intervalo', 'volta_intervalo', 'saida')),
+    origem TEXT NOT NULL CHECK(origem IN ('ponto', 'manual')),
+    observacao TEXT NOT NULL,
+    UNIQUE(funcionario_id, data, hora)
+);
 CREATE TABLE IF NOT EXISTS regras (
     versao INTEGER PRIMARY KEY,
     empresa TEXT NOT NULL,
@@ -62,5 +72,6 @@ CREATE TABLE IF NOT EXISTS regras (
     parametros TEXT NOT NULL CHECK(json_valid(parametros))
 );
 CREATE INDEX IF NOT EXISTS escalas_funcionario ON escalas(funcionario_id);
+CREATE INDEX IF NOT EXISTS marcacoes_funcionario ON marcacoes(funcionario_id);
 CREATE INDEX IF NOT EXISTS regras_grupo ON regras(empresa, categoria);
 PRAGMA user_version = 1;
